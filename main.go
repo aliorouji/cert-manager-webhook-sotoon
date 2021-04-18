@@ -24,6 +24,7 @@ import (
 )
 
 var GroupName = os.Getenv("GROUP_NAME")
+var WebhookNS = os.Getenv("WEBHOOK_NAMESPACE")
 
 var validate *validator.Validate
 
@@ -107,7 +108,12 @@ func (c *sotoonDNSProviderSolver) secret(ref corev1.SecretKeySelector, namespace
 }
 
 func (c *sotoonDNSProviderSolver) sotoonClient(ch *v1alpha1.ChallengeRequest, cfg *sotoonDNSProviderConfig) (*rest.RESTClient, error) {
-	apiToken, err := c.secret(cfg.APITokenSecretRef, ch.ResourceNamespace)
+	secretNS := ch.ResourceNamespace
+	if ch.AllowAmbientCredentials {
+		secretNS = WebhookNS
+	}
+
+	apiToken, err := c.secret(cfg.APITokenSecretRef, secretNS)
 	if err != nil {
 		return nil, err
 	}
